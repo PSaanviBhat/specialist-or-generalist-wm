@@ -1,0 +1,19 @@
+# secrets
+.env
+
+# data (full data lives on the team Google Drive)
+data/raw/
+*.jsonl.gz
+!data/sample/*.jsonl
+
+# caches
+cache/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# envs / external code
+uv_*/
+.venv/
+w2w/
