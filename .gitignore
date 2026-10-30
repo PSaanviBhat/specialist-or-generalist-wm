@@ -17,3 +17,6 @@ __pycache__/
 uv_*/
 .venv/
 w2w/
+logs/
+data/upload/
+results/*_predictions.jsonl

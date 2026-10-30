@@ -19,14 +19,14 @@ python -m wm.schema path/to/file.jsonl
 | `step` | int | 0-based step index inside the episode |
 | `goal` | str | task description shown to the agent |
 | `o_t` | str | composite observation before the action (format below) |
-| `a_t` | str | action taken (always one of `admissible_actions`) |
+| `a_t` | str | action taken. One of `admissible_actions`, except ALFWorld random steps that deliberately use a well-formed non-admissible command (answered `Nothing happens.`) |
 | `o_next` | str | composite observation after the action |
 | `feedback_next` | str | raw environment response to `a_t` (target for exact-match fidelity) |
 | `reward` | float | env reward after `a_t` (ScienceWorld: score delta; ALFWorld: 1.0 when won) |
 | `done` | bool | episode ended after `a_t` |
 | `won` | bool | task solved after `a_t` |
 | `capability_tag` | list[str] | empty at collection; filled by the capability tagger |
-| `policy` | str | who chose `a_t`: `expert`, `random`, `llm` (`llm_fallback` = LLM reply was not admissible, a random action was used) |
+| `policy` | str | who chose `a_t`: `expert`, `random`, `llm` (`llm_fallback` = LLM reply was not a valid choice, a random admissible action was used). In ALFWorld about 1/3 of `random` steps are failing commands, because every admissible ALFWorld command succeeds |
 | `action_prefix` | list[str] | every action from reset up to, not including, `a_t`. `len == step`. Replaying it from `reset(task_id)` reproduces `o_t` exactly |
 | `admissible_actions` | list[str] | full list of valid actions at `o_t` |
 | `collector_seed` | int | seed of the collection run |

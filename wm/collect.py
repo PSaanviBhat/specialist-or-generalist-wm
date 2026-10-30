@@ -29,9 +29,15 @@ DRIVER_STEPS = (3, 10)   # m ~ U[3, 10] driver steps
 
 
 def load_task_ids(env: str, split: str) -> List[str]:
-    name = "train" if split == "train" else "test"
-    with open(os.path.join("splits", "%s_%s.json" % (env, name))) as f:
-        return [x["item_id"] for x in json.load(f)]
+    """Word2World ids for a split. Train drops any id that is also a test id: Word2World's
+    ScienceWorld train and test files share 61 ids, and held-out must stay task-disjoint."""
+    def read(name):
+        with open(os.path.join("splits", "%s_%s.json" % (env, name))) as f:
+            return [x["item_id"] for x in json.load(f)]
+    if split == "heldout":
+        return read("test")
+    test = set(read("test"))
+    return [t for t in read("train") if t not in test]
 
 
 def parse_target(text: str) -> Dict[str, int]:
@@ -53,11 +59,11 @@ def run_episode(env, env_name, split, task_id, ep, driver, policies, rng, seed, 
         who = "expert" if step < k else driver
         if step >= k + m and driver != "expert":
             break
-        action, meta = policies[who].act(env, rng)
+        action, meta = policies[who].act(env, rng, obs_text=r.obs)
         if action is None and who == "expert" and driver != "expert":
             k = step  # expert ran out (e.g. ScienceWorld gold path ended): hand over now
             who = driver
-            action, meta = policies[who].act(env, rng)
+            action, meta = policies[who].act(env, rng, obs_text=r.obs)
         if action is None:
             break
         if meta and meta.get("fallback"):
@@ -119,7 +125,7 @@ def main(argv=None):
     print("existing rows:", dict(have), "still needed:", need, flush=True)
 
     env = make_env(args.env)
-    policies = {name: make_policy(name) for name in set(target) | {"expert"}}
+    policies = {name: make_policy(name, args.env) for name in set(target) | {"expert"}}
     task_ids = load_task_ids(args.env, args.split)
     random.Random(args.seed).shuffle(task_ids)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)

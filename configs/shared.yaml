@@ -2,6 +2,9 @@
 seeds: [0, 1, 2]
 budgets: [32, 64, 128, 256, 512, 1024]
 policy_mix: {expert: 0.5, random: 0.3, llm: 0.2}
+# random policy details (wm/policies.py): ScienceWorld samples verb-first;
+# ALFWorld uses a non-admissible (failing) command on 1/3 of random steps.
+random_policy: {sciworld_by_verb: true, alfworld_fail_rate: 0.333}
 
 pool_targets:
   train: {expert: 800, random: 480, llm: 320}

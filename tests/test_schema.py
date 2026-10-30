@@ -15,7 +15,8 @@ def test_samples_valid():
         assert len(rows) == 20
         for row in rows:
             assert validate_row(row) == [], (path, row["transition_id"])
-            assert row["a_t"] in row["admissible_actions"]
+            # ALFWorld random steps may use a non-admissible command, which must fail
+            assert row["a_t"] in row["admissible_actions"] or row["feedback_next"] == "Nothing happens."
             assert row["split"] == "train"
 
 
