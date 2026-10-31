@@ -57,18 +57,29 @@ Only information the agent can see. No hidden initial state (unlike Word2World, 
 
 ## Buffer format for the JEPA / SFT arms
 
-`jepa/training/buffer.py` (team repo) reads `obs`, `action`, `obs_next`, `env`, `game`, `cap_tag`. Build those files from the Drive data with:
+`jepa/training/buffer.py` (team repo) reads `obs`, `action`, `obs_next`, `env`, `game`, `cap_tag`. `wm/export_buffers.py` converts our rows:
+
+| Buffer field | From | Note |
+|---|---|---|
+| `obs` | `o_t` | composite observation (goal, room, location, feedback, inventory, admissible) |
+| `action` | `a_t` | |
+| `obs_next` | `feedback_next` | exactly the text the env returned after the action (`--obs-next composite` uses `o_next`) |
+| `env` | `env` | |
+| `game` | `task_id` | the game / task instance; RQ3 uses games as data points (`--game family` groups by task type) |
+| `cap_tag` / `cap_tags` | `capability_tag` | first tag / full list; empty until tagged |
+| `obs_next_full`, `feedback_next`, `transition_id`, `task_id`, `task_type`, `split`, `policy` | same | kept for tracing back to the source row |
+
+**Per-game ALFWorld buffer** (12 games, 2 per task type, about 120 transitions each; `splits/alfworld_games12.txt`):
+
+```bash
+python -m wm.collect --env alfworld --split train --tasks splits/alfworld_games12.txt --dedupe --tag games --expert-warmup 8 --target expert=900,random=540 --seed 0 --max-episodes 3000 --out data/raw/alfworld_games.jsonl
+python -m wm.export_buffers --env alfworld --train data/raw/alfworld_games.jsonl --single data/buffers/alfworld_games.jsonl
+```
+
+Each game is played many times with the expert/random mix; `--dedupe` keeps only new `(task_id, o_t, a_t)` transitions. ALFWorld's expert is nearly deterministic per game, so `--expert-warmup 8` starts expert episodes with up to 8 random steps (recorded as `random`); the expert replans from there and reaches new states.
+
+**Per-budget buffers** (+ the task-disjoint held-out set) from the main pool:
 
 ```bash
 python -m wm.export_buffers --env alfworld --train data/raw/alfworld_train.jsonl.gz --heldout data/raw/alfworld_heldout.jsonl.gz --provisional
 ```
-
-It writes `data/buffers/{env}_seed{s}_n{n}[_provisional].jsonl` (one per budget) and `data/buffers/{env}_heldout.jsonl` (task-disjoint held-out set; use it for evaluation instead of a random 10% of the budget).
-
-| Buffer field | From | Note |
-|---|---|---|
-| `obs`, `action`, `obs_next` | `o_t`, `a_t`, `o_next` | composite observations |
-| `env` | `env` | |
-| `game` | task family | ALFWorld: the 6 task types (`pick_heat_then_place_in_recep`, ...); ScienceWorld: task name. This is the per-game unit in `probe_fidelity.py` |
-| `cap_tag` / `cap_tags` | `capability_tag` | first tag / full list; empty until tagged |
-| `transition_id`, `task_id`, `split`, `policy`, `feedback_next` | same | kept for tracing back to the source row |
