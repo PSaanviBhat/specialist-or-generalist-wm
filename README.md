@@ -22,6 +22,7 @@ wm/llm_client.py, wm/llm_policy.py   LLM_BASE_URL client with sqlite cache + ret
 wm/budgets.py   nested, stratified budget id lists
 wm/stats.py     counts + integrity checks (split leakage, duplicates, schema)
 wm/replay_check.py   replays saved action_prefix for sampled rows and compares o_t / next feedback
+wm/export_buffers.py writes budgets in the JEPA/SFT buffer format (obs/action/obs_next/game)
 wm/schema.py    JSONL validator: python -m wm.schema FILE.jsonl
 sanity/         Task 3: 3-shot retrieval sanity check
 scripts/        setup_vm.sh, fetch_data.py, collect_all.sh, package_data.sh

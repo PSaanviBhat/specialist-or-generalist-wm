@@ -20,3 +20,4 @@ w2w/
 logs/
 data/upload/
 results/*_predictions.jsonl
+data/buffers/

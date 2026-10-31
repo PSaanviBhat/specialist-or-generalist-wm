@@ -54,3 +54,21 @@ Only information the agent can see. No hidden initial state (unlike Word2World, 
 ## Budgets
 
 `data/budgets/{env}_seed{s}_n{n}.txt` lists `transition_id`s, one per line. For every seed, budgets are nested (32 ⊂ 64 ⊂ … ⊂ 1024) and hold the 50/30/20 expert/random/LLM mix. All budget ids come from the `train` split.
+
+## Buffer format for the JEPA / SFT arms
+
+`jepa/training/buffer.py` (team repo) reads `obs`, `action`, `obs_next`, `env`, `game`, `cap_tag`. Build those files from the Drive data with:
+
+```bash
+python -m wm.export_buffers --env alfworld --train data/raw/alfworld_train.jsonl.gz --heldout data/raw/alfworld_heldout.jsonl.gz --provisional
+```
+
+It writes `data/buffers/{env}_seed{s}_n{n}[_provisional].jsonl` (one per budget) and `data/buffers/{env}_heldout.jsonl` (task-disjoint held-out set; use it for evaluation instead of a random 10% of the budget).
+
+| Buffer field | From | Note |
+|---|---|---|
+| `obs`, `action`, `obs_next` | `o_t`, `a_t`, `o_next` | composite observations |
+| `env` | `env` | |
+| `game` | task family | ALFWorld: the 6 task types (`pick_heat_then_place_in_recep`, ...); ScienceWorld: task name. This is the per-game unit in `probe_fidelity.py` |
+| `cap_tag` / `cap_tags` | `capability_tag` | first tag / full list; empty until tagged |
+| `transition_id`, `task_id`, `split`, `policy`, `feedback_next` | same | kept for tracing back to the source row |
