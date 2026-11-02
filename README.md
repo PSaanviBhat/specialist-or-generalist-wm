@@ -23,6 +23,7 @@ wm/budgets.py   nested, stratified budget id lists
 wm/stats.py     counts + integrity checks (split leakage, duplicates, schema)
 wm/replay_check.py   replays saved action_prefix for sampled rows and compares o_t / next feedback
 wm/export_buffers.py writes budgets in the JEPA/SFT buffer format (obs/action/obs_next/game)
+                     per-game buffers: alfworld_games (game = task id), sciworld_games (game = task type); see docs/SCHEMA.md
 wm/schema.py    JSONL validator: python -m wm.schema FILE.jsonl
 sanity/         Task 3: 3-shot retrieval sanity check
 scripts/        setup_vm.sh, fetch_data.py, collect_all.sh, package_data.sh
@@ -44,6 +45,7 @@ Rerunning resumes where it stopped. Offline tests (no env, no GPU): `python -m p
 - Observations contain no hidden initial state.
 - Replaying a row's `action_prefix` from `reset(task_id)` reproduces `o_t`: exactly in ALFWorld; in ScienceWorld up to the order objects are listed in the room description (compare with `wm.obs.canonical`).
 - ScienceWorld ambiguity prompts end the episode (their numbered options are not replayable).
+- ScienceWorld is not fully deterministic: in about 2% of replayed states (closing an electrical circuit, mixing paints) a component can report a different on/off state between runs. Phase 2 replays each state several times and keeps only consistent true next states.
 - ALFWorld: every admissible command succeeds, so about 1/3 of random steps use a well-formed non-admissible command over visible names (e.g. `take mug 1 from drawer 2` when the mug is elsewhere), which returns `Nothing happens.`. This is where ALFWorld's action-failure transitions come from.
 - ScienceWorld random actions pick a verb uniformly, then an action with that verb (about 2/3 of valid commands are `connect X to Y`). The LLM sees at most 60 ScienceWorld candidates, sampled the same way.
 - ALFWorld's handcoded expert is not optimal: it explores and solves roughly half of tasks within 30 steps.
